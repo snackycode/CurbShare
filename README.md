@@ -12,7 +12,7 @@ a mobile app that connects drivers with homeowners renting out unused parking sp
 - Stripe for dummy payment
 
 ## API Key needed:
-- android:name="com.google.android.geo.API_KEY"
+- /AndroidManifest.xml android:name="com.google.android.geo.API_KEY"
             android:value="Input the value of own api key" />
 
 - lib/services/place_service.dart   final String apiKey = "Input Your API Key";
