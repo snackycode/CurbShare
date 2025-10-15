@@ -1,0 +1,7 @@
+firebase emulators:start --only functions
+
+firebase functions:list  
+
+firebase deploy --only functions:createAccountLink 
+
+firebase functions:log
