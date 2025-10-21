@@ -384,7 +384,6 @@ class _SignupScreenState extends State<SignupScreen> {
     );
   }
 
-
   Widget _buildConfirmButton({VoidCallback? onPressed}) {
     return TextButton(
       onPressed: onPressed ??
@@ -417,6 +416,9 @@ class _SignupScreenState extends State<SignupScreen> {
                   .collection('User')
                   .doc(user.uid)
                   .update({
+                'name': _nameController.text.trim(),
+                'email': _emailController.text.trim(),
+                'phone': '$_selectedCode${_phoneController.text.trim()}',
                 'role': role,
                 'stripeOnboarded': true,
                 'stripeAccountId': stripeAccountId,
@@ -424,9 +426,6 @@ class _SignupScreenState extends State<SignupScreen> {
               });
               // await topUpTestAccount(role);
 
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("✅ Account setup complete!")),
-              );
               if (context.mounted) {
                 Navigator.pushReplacement(
                   context,
@@ -434,7 +433,6 @@ class _SignupScreenState extends State<SignupScreen> {
                 );
               }
             } catch (e, st) {
-              print("❌ Error in confirm button: $e\n$st");
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(content: Text("Error setting up account: $e")),
               );

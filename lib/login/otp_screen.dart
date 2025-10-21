@@ -25,26 +25,6 @@ class _OtpScreenState extends State<OtpScreen> {
   final TextEditingController _otpController = TextEditingController();
   final String _verificationId = "";
 
-  // Future<void> signInWithOTP() async {
-  //   try {
-  //     PhoneAuthCredential credential = PhoneAuthProvider.credential(
-  //       verificationId: _verificationId,
-  //       smsCode: _otpController.text.trim(),
-  //     );
-
-  //     // Sign in the user (or register if new)
-  //     UserCredential userCredential =
-  //         await FirebaseAuth.instance.signInWithCredential(credential);
-  //     User? user = userCredential.user;
-
-  //     if (user != null) {
-  //       print("✅ User registered/logged in: ${user.phoneNumber}");
-  //     }
-  //   } catch (e) {
-  //     print("Error signing in with OTP: $e");
-  //   }
-  // }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -144,49 +124,117 @@ class _OtpScreenState extends State<OtpScreen> {
                     onChanged: (value) {
                       print(value);
                     },
+                    // onCompleted: (value) async {
+                    //    if (!mounted) return;
+                    //   try {
+                    //     PhoneAuthCredential credential =
+                    //         PhoneAuthProvider.credential(
+                    //       verificationId: widget.verificationId,
+                    //       smsCode: value.trim(),
+                    //     );
+                    //     UserCredential userCredential = await FirebaseAuth
+                    //         .instance
+                    //         .signInWithCredential(credential);
+                    //     User? user = userCredential.user;
+                    //     if (user != null) {
+                    //       final userRef = FirebaseFirestore.instance
+                    //           .collection("User")
+                    //           .doc(user.uid);
+                    //       final userDoc = await userRef.get();
+                    //       if (!userDoc.exists) {
+                    //         String fullPhone =
+                    //             '${widget.countryCode}${widget.phoneNumber}';
+
+                    //         Navigator.pushReplacement(
+                    //           context,
+                    //           MaterialPageRoute(
+                    //             builder: (context) => SignupScreen(
+                    //               initialCountryCode: widget.countryCode,
+                    //               initialPhone: widget.phoneNumber,
+                    //             ),
+                    //           ),
+                    //         );
+                    //       } else {
+                    //         Navigator.pushReplacement(
+                    //           context,
+                    //           MaterialPageRoute(
+                    //               builder: (context) => const Wrapper()),
+                    //         );
+                    //       }
+                    //     } else {
+                    //       ScaffoldMessenger.of(context).showSnackBar(
+                    //         const SnackBar(
+                    //           content:
+                    //               Text("Incorrect code, please try again."),
+                    //           backgroundColor: Colors.red,
+                    //         ),
+                    //       );
+                    //     }
+                    //   } catch (e) {
+                    //     ScaffoldMessenger.of(context).showSnackBar(
+                    //       const SnackBar(
+                    //         content: Text("Incorrect code, please try again."),
+                    //         backgroundColor: Colors.red,
+                    //       ),
+                    //     );
+                    //   }
+                    // },
                     onCompleted: (value) async {
+                      if (!mounted) return;
+
                       try {
+                        // 1️⃣ Create credential from verificationId + OTP
                         PhoneAuthCredential credential =
                             PhoneAuthProvider.credential(
                           verificationId: widget.verificationId,
                           smsCode: value.trim(),
                         );
+
+                        // 2️⃣ Sign in user
                         UserCredential userCredential = await FirebaseAuth
                             .instance
                             .signInWithCredential(credential);
                         User? user = userCredential.user;
-                        if (user != null) {
-                          final userRef = FirebaseFirestore.instance
-                              .collection("User")
-                              .doc(user.uid);
-                          final userDoc = await userRef.get();
-                          if (!userDoc.exists) {
-                            String fullPhone =
-                                '${widget.countryCode}${widget.phoneNumber}';
 
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => SignupScreen(
-                                  initialCountryCode: widget.countryCode,
-                                  initialPhone: widget.phoneNumber,
-                                ),
-                              ),
-                            );
-                          } else {
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => const Wrapper()),
-                            );
-                          }
-                        } else {
+                        if (user == null) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                              content:
-                                  Text("Incorrect code, please try again."),
+                              content: Text(
+                                  "Verification failed, please try again."),
                               backgroundColor: Colors.red,
                             ),
+                          );
+                          return;
+                        }
+
+                        // 3️⃣ Ensure Firestore document exists
+                        final userRef = FirebaseFirestore.instance
+                            .collection('User')
+                            .doc(user.uid);
+                        final userDoc = await userRef.get();
+
+                        if (!userDoc.exists) {
+                          await userRef.set({
+                            'name': user.displayName ?? '',
+                            'email': user.email ?? '',
+                            'phone': user.phoneNumber ?? '',
+                            'role': 'driver', // default role
+                            'createdAt': FieldValue.serverTimestamp(),
+                          });
+
+                          // 4️⃣ Navigate to SignupScreen for additional info
+                          Navigator.of(context).pushReplacement(
+                            MaterialPageRoute(
+                              builder: (_) => SignupScreen(
+                                initialCountryCode: widget.countryCode,
+                                initialPhone: widget.phoneNumber,
+                              ),
+                            ),
+                          );
+                        } else {
+                          // Existing user → go to Wrapper or MainScreen
+                          Navigator.of(context).pushReplacement(
+                            MaterialPageRoute(builder: (_) => const Wrapper()),
                           );
                         }
                       } catch (e) {
@@ -198,6 +246,7 @@ class _OtpScreenState extends State<OtpScreen> {
                         );
                       }
                     },
+
                     pinTheme: PinTheme(
                       shape: PinCodeFieldShape.box,
                       borderRadius: BorderRadius.circular(8),
