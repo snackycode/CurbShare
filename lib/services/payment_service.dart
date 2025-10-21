@@ -52,6 +52,7 @@ class PaymentService {
         merchantDisplayName: "CurbShare Parking",
       ),
     );
+    
     await Stripe.instance.presentPaymentSheet();
 
     // Update Firebase balances for demo

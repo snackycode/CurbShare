@@ -24,27 +24,30 @@ class HostNotiScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: _buildAppBar(),
-      body: StreamBuilder<List<BookingModel>>(
-        stream: _notiService.hostBookingsLive(minutesWindow: 10),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(child: Text("No upcoming bookings."));
-          }
-
-          final bookings = snapshot.data!;
-
-          return ListView.builder(
-            itemCount: bookings.length,
-            itemBuilder: (context, index) {
-              final book = bookings[index];
-              return _buildBookCard(context, book);
-            },
-          );
-        },
+      body: Container(
+        color: Colors.white,
+        child: StreamBuilder<List<BookingModel>>(
+          stream: _notiService.hostBookingsLive(minutesWindow: 10),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+        
+            if (!snapshot.hasData || snapshot.data!.isEmpty) {
+              return const Center(child: Text("No upcoming bookings."));
+            }
+        
+            final bookings = snapshot.data!;
+        
+            return ListView.builder(
+              itemCount: bookings.length,
+              itemBuilder: (context, index) {
+                final book = bookings[index];
+                return _buildBookCard(context, book);
+              },
+            );
+          },
+        ),
       ),
     );
   }

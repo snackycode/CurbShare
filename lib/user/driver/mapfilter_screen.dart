@@ -1202,37 +1202,6 @@ class _MapFilterScreenState extends State<MapFilterScreen> {
     );
   }
 
-  // Helper for date picker
-  Widget _buildDatePickerField(
-    BuildContext context, {
-    required String label,
-    required DateTime selectedDate,
-    required ValueChanged<DateTime> onDateChanged,
-  }) {
-    return TextFormField(
-      readOnly: true,
-      decoration: InputDecoration(
-        labelText: label,
-        suffixIcon: const Icon(Icons.calendar_today_outlined),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-      ),
-      controller: TextEditingController(
-          text:
-              "${selectedDate.year}-${selectedDate.month.toString().padLeft(2, '0')}-${selectedDate.day.toString().padLeft(2, '0')}"),
-      onTap: () async {
-        final picked = await showDatePicker(
-          context: context,
-          initialDate: selectedDate,
-          firstDate: DateTime(2000),
-          lastDate: DateTime(2100),
-        );
-        if (picked != null) onDateChanged(picked);
-      },
-    );
-  }
-
   Widget _buildDateSelection({
     required BuildContext context,
     required DateTime? selectedDate,

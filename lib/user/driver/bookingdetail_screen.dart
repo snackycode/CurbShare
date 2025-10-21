@@ -5,6 +5,7 @@ import 'package:curbshare/model/booking_model.dart';
 import 'package:curbshare/model/parklot_model.dart';
 import 'package:curbshare/services/location_service.dart';
 import 'package:curbshare/services/payment_service.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:intl/intl.dart';
@@ -358,68 +359,351 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
     );
   }
 
-  Widget _buildRebookButton() {
-    return Center(
-      child: SizedBox(
-        width: 200,
-        height: 45,
-        child: TextButton(
-          style: TextButton.styleFrom(
-            backgroundColor: const Color.fromRGBO(59, 120, 195, 1),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(15),
-            ),
+  // Widget _buildRebookButton() {
+  //   return Center(
+  //     child: SizedBox(
+  //       width: 200,
+  //       height: 45,
+  //       child: TextButton(
+  //         style: TextButton.styleFrom(
+  //           backgroundColor: const Color.fromRGBO(59, 120, 195, 1),
+  //           shape: RoundedRectangleBorder(
+  //             borderRadius: BorderRadius.circular(15),
+  //           ),
+  //         ),
+  //         onPressed: () async {
+  //           if (lot == null) {
+  //             ScaffoldMessenger.of(context).showSnackBar(
+  //               const SnackBar(content: Text("Lot information not available.")),
+  //             );
+  //             return;
+  //           }
+  //           try {
+  //             final newStart = DateTime.now();
+  //             final newEnd = newStart.add(
+  //               currentBook.reservationType == "monthly"
+  //                   ? const Duration(days: 30)
+  //                   : currentBook.reservationType == "daily"
+  //                       ? const Duration(days: 1)
+  //                       : const Duration(hours: 1),
+  //             );
+  //             showDialog(
+  //               context: context,
+  //               barrierDismissible: false,
+  //               builder: (_) => const Center(
+  //                 child: CircularProgressIndicator(),
+  //               ),
+  //             );
+  //             await PaymentService.startBookingAndPay(
+  //               context: context,
+  //               lotId: lot!.id,
+  //               hostId: lot!.hostId,
+  //               start: newStart,
+  //               end: newEnd,
+  //               bookingType: currentBook.reservationType,
+  //               amount: currentBook.budget ?? 10.0, // fallback if missing
+  //             );
+  //             if (Navigator.canPop(context)) Navigator.pop(context);
+  //           } catch (e) {
+  //             if (Navigator.canPop(context)) Navigator.pop(context);
+  //             ScaffoldMessenger.of(context).showSnackBar(
+  //               SnackBar(content: Text("Booking failed: $e")),
+  //             );
+  //           }
+  //           // Navigate to FilterScreen and pass filterData
+  //         },
+  //         child: const Text(
+  //           'Rebook',
+  //           style: TextStyle(
+  //             fontFamily: 'Inter',
+  //             fontWeight: FontWeight.w600,
+  //             fontSize: 16,
+  //             color: Colors.white,
+  //           ),
+  //         ),
+  //       ),
+  //     ),
+  //   );
+  // }
+Widget _buildRebookButton() {
+  return Center(
+    child: SizedBox(
+      width: 200,
+      height: 45,
+      child: TextButton(
+        style: TextButton.styleFrom(
+          backgroundColor: const Color.fromRGBO(59, 120, 195, 1),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
           ),
-          onPressed: () async {
-            if (lot == null) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("Lot information not available.")),
+        ),
+        onPressed: () async {
+          if (lot == null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text("Lot information not available.")),
+            );
+            return;
+          }
+
+          DateTime? startDate;
+          DateTime? endDate;
+
+          await showModalBottomSheet(
+            context: context,
+            isScrollControlled: true,
+            backgroundColor: Colors.white,
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            builder: (context) {
+              return StatefulBuilder(
+                builder: (context, setState) {
+                  return Padding(
+                    padding: EdgeInsets.only(
+                      bottom: MediaQuery.of(context).viewInsets.bottom,
+                      left: 16,
+                      right: 16,
+                      top: 20,
+                    ),
+                    child: SingleChildScrollView(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Center(
+                            child: Text(
+                              "Select Booking Dates",
+                              style: TextStyle(
+                                fontFamily: 'Inter',
+                                fontWeight: FontWeight.w600,
+                                fontSize: 18,
+                                color: Color(0xFF004991),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+
+                          // Start Date
+                          _buildDateSelection(
+                            context: context,
+                            selectedDate: startDate,
+                            hintText: "Select Start Date & Time",
+                            onDateTimeChanged: (val) {
+                              setState(() => startDate = val);
+                            },
+                          ),
+                          const SizedBox(height: 16),
+
+                          // End Date
+                          _buildDateSelection(
+                            context: context,
+                            selectedDate: endDate,
+                            hintText: "Select End Date & Time",
+                            onDateTimeChanged: (val) {
+                              setState(() => endDate = val);
+                            },
+                          ),
+                          const SizedBox(height: 30),
+
+                          // Confirm Button
+                          SizedBox(
+                            width: double.infinity,
+                            height: 45,
+                            child: TextButton(
+                              style: TextButton.styleFrom(
+                                backgroundColor: (startDate != null &&
+                                        endDate != null &&
+                                        endDate!.isAfter(startDate!))
+                                    ? const Color.fromRGBO(59, 120, 195, 1)
+                                    : Colors.grey,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(15),
+                                ),
+                              ),
+                              onPressed: (startDate != null &&
+                                      endDate != null &&
+                                      endDate!.isAfter(startDate!))
+                                  ? () async {
+                                      Navigator.pop(context); // close sheet
+
+                                      showDialog(
+                                        context: context,
+                                        barrierDismissible: false,
+                                        builder: (_) => const Center(
+                                          child:
+                                              CircularProgressIndicator(),
+                                        ),
+                                      );
+
+                                      try {
+                                        await PaymentService
+                                            .startBookingAndPay(
+                                          context: context,
+                                          lotId: lot!.id,
+                                          hostId: lot!.hostId,
+                                          start: startDate!,
+                                          end: endDate!,
+                                          bookingType: currentBook.reservationType,
+                                          amount: currentBook.budget ?? 10.0,
+                                        );
+
+                                        // ✅ No Navigator.pop(context) here
+                                        // (PaymentService handles navigation)
+                                      } catch (e) {
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(SnackBar(
+                                          content: Text("Booking failed: $e"),
+                                        ));
+                                      }
+                                    }
+                                  : null,
+                              child: const Text(
+                                'Confirm Rebook',
+                                style: TextStyle(
+                                  fontFamily: 'Inter',
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 16,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 30),
+                        ],
+                      ),
+                    ),
+                  );
+                },
               );
-              return;
-            }
-            try {
-              final newStart = DateTime.now();
-              final newEnd = newStart.add(
-                currentBook.reservationType == "monthly"
-                    ? const Duration(days: 30)
-                    : currentBook.reservationType == "daily"
-                        ? const Duration(days: 1)
-                        : const Duration(hours: 1),
-              );
-              showDialog(
-                context: context,
-                barrierDismissible: false,
-                builder: (_) => const Center(
-                  child: CircularProgressIndicator(),
-                ),
-              );
-              await PaymentService.startBookingAndPay(
-                context: context,
-                lotId: lot!.id,
-                hostId: lot!.hostId,
-                start: newStart,
-                end: newEnd,
-                bookingType: currentBook.reservationType,
-                amount: currentBook.budget ?? 10.0, // fallback if missing
-              );
-              if (Navigator.canPop(context)) Navigator.pop(context);
-            } catch (e) {
-              if (Navigator.canPop(context)) Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text("Booking failed: $e")),
-              );
-            }
-            // Navigate to FilterScreen and pass filterData
+            },
+          );
+        },
+        child: const Text(
+          'Rebook',
+          style: TextStyle(
+            fontFamily: 'Inter',
+            fontWeight: FontWeight.w600,
+            fontSize: 16,
+            color: Colors.white,
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+
+  Widget _buildDateSelection({
+    required BuildContext context,
+    required DateTime? selectedDate,
+    required String hintText,
+    required ValueChanged<DateTime> onDateTimeChanged,
+  }) {
+    return GestureDetector(
+      onTap: () async {
+        DateTime now = DateTime.now();
+        DateTime tempPickedDate = selectedDate ?? now;
+        bool isValid =
+            tempPickedDate.isAfter(now) || tempPickedDate.isAtSameMomentAs(now);
+
+        DateTime? picked = await showModalBottomSheet<DateTime>(
+          context: context,
+          builder: (_) {
+            return StatefulBuilder(
+              builder: (context, setState) {
+                return Container(
+                  height: 400,
+                  color: Colors.white,
+                  child: Column(
+                    children: [
+                      Expanded(
+                        child: CupertinoDatePicker(
+                          mode: CupertinoDatePickerMode.dateAndTime,
+                          initialDateTime: selectedDate ?? now,
+                          use24hFormat: false,
+                          onDateTimeChanged: (val) {
+                            setState(() {
+                              tempPickedDate = val;
+                              isValid =
+                                  val.isAfter(now) || val.isAtSameMomentAs(now);
+                            });
+                          },
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 20.0),
+                        child: SizedBox(
+                          width: 223,
+                          height: 45,
+                          child: TextButton(
+                            style: TextButton.styleFrom(
+                              backgroundColor: isValid
+                                  ? const Color.fromRGBO(59, 120, 195, 1)
+                                  : Colors.grey, // grey if invalid
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(15),
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                            ),
+                            onPressed: isValid
+                                ? () {
+                                    Navigator.of(context).pop(tempPickedDate);
+                                  }
+                                : null, // disable when invalid
+                            child: const Text(
+                              'Confirm',
+                              style: TextStyle(
+                                fontFamily: 'Inter',
+                                fontWeight: FontWeight.w600,
+                                fontSize: 16,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            );
           },
-          child: const Text(
-            'Rebook',
-            style: TextStyle(
-              fontFamily: 'Inter',
-              fontWeight: FontWeight.w600,
-              fontSize: 16,
-              color: Colors.white,
-            ),
+        );
+
+        if (picked != null) {
+          onDateTimeChanged(picked); // Update parent state
+        }
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border.all(
+            width: 0.3,
+            color: const Color.fromRGBO(79, 79, 79, 1),
           ),
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              selectedDate == null
+                  ? hintText
+                  : "${selectedDate.toLocal()}".split('.')[0],
+              style: TextStyle(
+                fontFamily: 'Roboto',
+                fontWeight: FontWeight.w300,
+                fontSize: 14,
+                color: selectedDate == null ? Colors.grey : Colors.black,
+              ),
+            ),
+            const Icon(
+              Icons.calendar_today,
+              size: 20,
+              color: Color.fromARGB(135, 0, 73, 145),
+            ),
+          ],
         ),
       ),
     );

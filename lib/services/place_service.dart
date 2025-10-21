@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class PlacesService {
-  final String apiKey = "Input Your API Key";
+  final String apiKey = "Input your PlaceService API Key";
 
   /// Fetch autocomplete suggestions
   Future<List<Map<String, dynamic>>> getAutocomplete(String input) async {
